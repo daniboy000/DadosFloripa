@@ -27,27 +27,30 @@ CREATE_TABLE_AREA = "CREATE TABLE IF NOT EXISTS area ( \
 
 CREATE_TABLE_SUMARIO_AREA = "CREATE TABLE IF NOT EXISTS sumario_area ( \
                                 _id INTEGER PRIMARY KEY, \
+                                codigo TEXT, \
                                 total_residentes INTEGER, \
                                 total_homens INTEGER, \
                                 total_mulheres INTEGER, \
-                                FOREIGN KEY id_area REFERENCES area(_id) \
+                                id_area INTEGER, \
+                                FOREIGN KEY(id_area) REFERENCES area(_id) \
                             );"
 
-CREATE_TABLE_RESIDENTES_AREA_IDATE = "CREATE TABLE residentes_idade_area ( \
+CREATE_TABLE_RESIDENTES_AREA_IDADE = "CREATE TABLE residentes_idade_area ( \
                                          _id INTEGER PRIMARY KEY, \
                                          sexo INTEGER NOT NULL, \
                                          menos_1_ano INTEGER, \
-                                         1_4_anos INTEGER, \
-                                         5_anos INTEGER, \
-                                         6_9_anos INTEGER, \
-                                         10_19 anos INTEGER, \
-                                         20_24_anos INTEGER, \
-                                         25_49_anos INTEGER, \
-                                         50_59_anos INTEGER, \
-                                         60_64_anos INTEGER, \
-                                         65_69_anos INTEGER, \
+                                         anos_1_4 INTEGER, \
+                                         anos_5 INTEGER, \
+                                         anos_6_9 INTEGER, \
+                                         anos_10_19 INTEGER, \
+                                         anos_20_24 INTEGER, \
+                                         anos_25_49 INTEGER, \
+                                         anos_50_59 INTEGER, \
+                                         anos_60_64 INTEGER, \
+                                         anos_65_69 INTEGER, \
                                          mais_70_anos INTEGER, \
-                                         FOREIGN KEY id_area REFERENCES area(_id) \
+                                         id_area INTEGER, \
+                                         FOREIGN KEY(id_area) REFERENCES area(_id) \
                                      );"
 
 
@@ -72,8 +75,8 @@ class DbManager:
         self.cur.execute(CREATE_TABLE_REGIAO)
         self.cur.execute(CREATE_TABLE_BAIRRO)
         self.cur.execute(CREATE_TABLE_AREA)
-        self.cursor.execute(CREATE_TABLE_SUMARIO_AREA)
-        self.cursor.execute(CREATE_TABLE_RESIDENTES_AREA_IDATE)
+        self.cur.execute(CREATE_TABLE_SUMARIO_AREA)
+        self.cur.execute(CREATE_TABLE_RESIDENTES_AREA_IDADE)
 
     def close(self):
         self.conn.close()
@@ -110,13 +113,31 @@ class DbManager:
             bairro_id = self.cur.fetchone()[0]
 
             self.cur.execute("UPDATE area set codigo=?, ano=?, link=?, bairro_id=?\
-                            WHERE codigo=?", (codigo, ano, link, bairro_id, codigo))
+                            WHERE codigo=?", (codigo, ano, link, bairro_id,
+                                              codigo))
 
             if self.cur.rowcount == 0:
                 self.cur.execute("INSERT INTO area (codigo, ano, link, bairro_id) \
                             VALUES (?, ?, ?, ?)", (codigo, ano, link, bairro_id))
 
             self.conn.commit()
+
+    def update_sumario_area(self, codigo, total_residentes,
+                            total_homens, total_mulheres, cod_area):
+
+        self.cur.execute("SELECT * FROM sumario_area WHERE \
+                          codigo=?", (codigo, ))
+
+        if self.cur.rowcount == 0:
+            self.cur.execute('INSERT INTO sumario_area (codigo, total_residentes, \
+                             total_homens, total_mulheres, id_area) VALUES (?, ?, ?, ?),', 
+                             (cod_area, total_residentes, total_homens, total_mulheres, cod_area))
+        self.cur.commit()
+
+    def get_regiao_por_codigo(self, regiao_codigo):
+        self.cur.execute('SELECT * FROM regiao WHERE \
+                          codigo=?', (regiao_codigo, ))
+        return self.cur.fetchone()
 
     def get_regiao(self, regiao):
         print "get_regiao"
